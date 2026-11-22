@@ -48,6 +48,14 @@ def create_app(config_object=Config):
     app.jinja_env.filters["duration"] = fmt_duration
     app.jinja_env.filters["filesize"] = fmt_size
 
+    @app.context_processor
+    def pending_badge():
+        from flask_login import current_user
+        from .models import AccessRequest
+        if current_user.is_authenticated and current_user.role == "instructor":
+            return {"pending_requests": AccessRequest.query.filter_by(status="pending").count()}
+        return {"pending_requests": 0}
+
     @login_manager.user_loader
     def load_user(uid):
         return db.session.get(User, int(uid))

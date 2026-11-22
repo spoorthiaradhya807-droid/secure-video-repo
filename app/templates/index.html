@@ -1,6 +1,10 @@
 {% extends "base.html" %}{% import "_icons.html" as i %}
 {% block title %}Library{% endblock %}
 {% block content %}
+{% if current_user.role == 'viewer' %}
+<div class="card banner"><div><b>Are you a teacher?</b><div class="muted small">Request instructor access to upload your own videos.</div></div>
+  <a class="btn ghost sm" href="{{ url_for('auth.request_access') }}">{{ i.icon('key', 16) }} Become an instructor</a></div>
+{% endif %}
 <div class="page-head">
   <div><h1>Course library</h1>
     <p>{{ videos|length }} video{{ '' if videos|length == 1 else 's' }} · streamed securely from private storage</p></div>

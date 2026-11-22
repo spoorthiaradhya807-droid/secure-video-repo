@@ -27,9 +27,11 @@
     {% if current_user.role == 'instructor' %}
     <a class="{{ 'active' if ep == 'main.upload_page' }}" href="{{ url_for('main.upload_page') }}">{{ i.icon('upload', 18) }} Upload</a>
     <a class="{{ 'active' if ep == 'main.manage' }}" href="{{ url_for('main.manage') }}">{{ i.icon('folder', 18) }} My videos</a>
-    <a class="{{ 'active' if ep == 'auth.invite' }}" href="{{ url_for('auth.invite') }}">{{ i.icon('mail', 18) }} Invite</a>
+    <a class="{{ 'active' if ep == 'auth.invite' }}" href="{{ url_for('auth.invite') }}">{{ i.icon('users', 18) }} Team{% if pending_requests %}<span class="count">{{ pending_requests }}</span>{% endif %}</a>
     <a class="{{ 'active' if ep == 'main.analytics_page' }}" href="{{ url_for('main.analytics_page') }}">{{ i.icon('chart', 18) }} Analytics</a>
     <a class="{{ 'active' if ep == 'main.audit' }}" href="{{ url_for('main.audit') }}">{{ i.icon('list', 18) }} Audit log</a>
+    {% else %}
+    <a class="{{ 'active' if ep == 'auth.request_access' }}" href="{{ url_for('auth.request_access') }}">{{ i.icon('key', 18) }} Become an instructor</a>
     {% endif %}
   </nav>
   <div class="spacer"></div>

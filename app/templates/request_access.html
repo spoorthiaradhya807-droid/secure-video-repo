@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% import "_icons.html" as i %}
+{% block title %}Become an instructor{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>Become an instructor</h1>
+  <p class="muted">Instructors can upload and manage course videos. Your account is a <b>Viewer</b> for now; an existing instructor reviews every request.</p>
+  {% if pending %}
+    <div class="status-box pending">{{ i.icon('clock', 20) }}<div><b>Request pending</b><br><span class="small muted">Sent {{ pending.created_at.strftime('%d %b %Y %H:%M') }} UTC. You will see the Upload menu here once an instructor approves it.</span></div></div>
+  {% else %}
+    {% if last and last.status == 'rejected' %}
+    <div class="status-box rejected">{{ i.icon('alert', 20) }}<div><b>Your previous request was not approved</b><br><span class="small muted">You can send a new one with more details.</span></div></div>
+    {% endif %}
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field"><label for="message">Tell the instructors who you are <span class="faint">(optional)</span></label>
+        <textarea id="message" name="message" maxlength="300" rows="4" placeholder="e.g. I teach Cloud Computing, Dept. of CSE"></textarea>
+        <div class="hint">Your username and e-mail are included automatically.</div></div>
+      <button class="btn block">{{ i.icon('arrow', 18) }} Send request</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

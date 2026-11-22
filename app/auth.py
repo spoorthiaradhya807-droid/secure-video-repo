@@ -9,7 +9,7 @@ from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from .extensions import db, limiter, login_manager
 from .mailer import send_invite_email, send_reset_email
-from .models import User, log_event
+from .models import AccessRequest, User, log_event, utcnow
 
 bp = Blueprint("auth", __name__)
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{3,30}$")
@@ -181,11 +181,19 @@ def logout():
     return redirect(url_for("auth.login"))
 
 
+def _team_context():
+    pending = (AccessRequest.query.filter_by(status="pending")
+               .order_by(AccessRequest.created_at).all())
+    history = (AccessRequest.query.filter(AccessRequest.status != "pending")
+               .order_by(AccessRequest.decided_at.desc()).limit(10).all())
+    return dict(pending=pending, history=history)
+
+
 @bp.route("/invite", methods=["GET", "POST"])
 @role_required("instructor")
 @limiter.limit("20 per hour", methods=["POST"])
 def invite():
-    """An instructor invites a colleague; only a signed, expiring, single-use link grants the role."""
+    """Team page: approve instructor requests and invite colleagues (signed, expiring, single-use link)."""
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         if not EMAIL_RE.match(email) or len(email) > 120:
@@ -198,8 +206,46 @@ def invite():
             link = f"{base}{url_for('auth.join', token=token)}"
             sent = send_invite_email(email, link, current_user.username)
             log_event("instructor_invited", detail=email)
-            return render_template("invite.html", link=link, invited=email, sent=sent)
-    return render_template("invite.html", link=None)
+            return render_template("invite.html", link=link, invited=email, sent=sent, **_team_context())
+    return render_template("invite.html", link=None, **_team_context())
+
+
+@bp.route("/request-instructor", methods=["GET", "POST"])
+@login_required
+@limiter.limit("5 per hour", methods=["POST"])
+def request_access():
+    """A viewer (e.g. a teacher who just signed up) asks to become an instructor."""
+    if current_user.role == "instructor":
+        return redirect(url_for("main.index"))
+    pending = AccessRequest.query.filter_by(user_id=current_user.id, status="pending").first()
+    if request.method == "POST" and not pending:
+        msg = request.form.get("message", "").strip()[:300]
+        db.session.add(AccessRequest(user_id=current_user.id, message=msg))
+        db.session.commit()
+        log_event("instructor_requested", detail=msg[:100])
+        flash("Request sent. An instructor will review it.", "success")
+        return redirect(url_for("auth.request_access"))
+    last = (AccessRequest.query.filter_by(user_id=current_user.id)
+            .order_by(AccessRequest.id.desc()).first())
+    return render_template("request_access.html", pending=pending, last=last)
+
+
+@bp.post("/api/requests/<int:rid>/<action>")
+@role_required("instructor")
+def decide_request(rid, action):
+    if action not in ("approve", "reject"):
+        abort(404)
+    r = db.get_or_404(AccessRequest, rid)
+    if r.status != "pending":
+        return jsonify(error="This request was already handled."), 400
+    r.status = "approved" if action == "approve" else "rejected"
+    r.decided_by, r.decided_at = current_user.id, utcnow()
+    if action == "approve":
+        r.user.role = "instructor"
+    db.session.commit()
+    log_event("instructor_approved" if action == "approve" else "instructor_rejected",
+              detail=f"{r.user.username} (request #{r.id})")
+    return jsonify(ok=True)
 
 
 @bp.route("/join/<token>", methods=["GET", "POST"])

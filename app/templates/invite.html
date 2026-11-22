@@ -1,8 +1,35 @@
 {% extends "base.html" %}{% import "_icons.html" as i %}
-{% block title %}Invite an instructor{% endblock %}
+{% block title %}Team{% endblock %}
 {% block content %}
-<div class="page-head"><div><h1>Invite an instructor</h1>
-  <p>Give a colleague permission to upload videos. They create their own account from a one-time link.</p></div></div>
+<div class="page-head"><div><h1>Team and access</h1>
+  <p>Approve teachers who asked for instructor access, or invite a colleague yourself.</p></div></div>
+<div class="card team-requests">
+  <h3>{{ i.icon('users', 20) }} Instructor requests {% if pending %}<span class="count">{{ pending|length }}</span>{% endif %}</h3>
+  {% if pending %}
+  <div class="tablewrap"><table>
+    <thead><tr><th>User</th><th>E-mail</th><th>Message</th><th>Requested</th><th></th></tr></thead>
+    <tbody>
+    {% for r in pending %}
+    <tr><td><b>{{ r.user.username }}</b></td><td>{{ r.user.email or '–' }}</td><td class="wrap">{{ r.message or '–' }}</td>
+      <td>{{ r.created_at.strftime('%d %b %H:%M') }} UTC</td>
+      <td><div class="row">
+        <button class="btn sm" type="button" data-decide data-url="{{ url_for('auth.decide_request', rid=r.id, action='approve') }}" data-name="{{ r.user.username }}" data-verb="approve">{{ i.icon('check', 16) }} Approve</button>
+        <button class="btn danger sm" type="button" data-decide data-url="{{ url_for('auth.decide_request', rid=r.id, action='reject') }}" data-name="{{ r.user.username }}" data-verb="reject">{{ i.icon('x', 16) }} Reject</button>
+      </div></td></tr>
+    {% endfor %}
+    </tbody></table></div>
+  <p class="hint" id="team-msg" role="status"></p>
+  {% else %}
+  <p class="muted">No pending requests. Teachers can sign up and use <b>Become an instructor</b>, and their request will show up here.</p>
+  {% endif %}
+  {% if history %}
+  <details class="sec"><summary class="small muted">Recent decisions</summary>
+    <div class="tablewrap"><table><tbody>
+    {% for r in history %}<tr><td>{{ r.user.username }}</td><td><span class="badge {{ 'instructor_joined' if r.status == 'approved' else 'denied' }}">{{ r.status }}</span></td><td>{{ r.decided_at.strftime('%d %b %H:%M') if r.decided_at else '' }}</td></tr>{% endfor %}
+    </tbody></table></div></details>
+  {% endif %}
+</div>
+<h2 class="section-title">Invite a colleague by e-mail</h2>
 <div class="upload">
   <div class="card">
     <form method="post">
@@ -29,3 +56,4 @@
   </aside>
 </div>
 {% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='team.js') }}"></script>{% endblock %}

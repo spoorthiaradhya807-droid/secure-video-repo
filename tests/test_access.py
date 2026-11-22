@@ -474,3 +474,77 @@ def test_invite_page_renders_with_dev_mode_link(client):
     login(client, "ins1")
     page = client.post("/invite", data={"email": "dev@example.com"}).data
     assert b"No e-mail was sent" in page and b"Invitation created for dev@example.com" in page
+
+
+# ---------------- instructor access requests ----------------
+def _request_access(client, message="I teach cloud computing"):
+    return client.post("/request-instructor", data={"message": message})
+
+
+def test_request_access_page_rules(client):
+    assert client.get("/request-instructor").status_code == 302             # anonymous
+    login(client, "ins1")
+    assert client.get("/request-instructor").status_code == 302             # instructors have nothing to request
+    client.post("/logout")
+    login(client, "view1")
+    page = client.get("/request-instructor").data
+    assert b"Become an instructor" in page and b"Send request" in page
+    assert b"Become an instructor" in client.get("/").data                  # visible in the viewer's menu
+
+
+def test_viewer_request_is_approved_by_instructor(client):
+    from app.models import AccessRequest
+    login(client, "view1")
+    _request_access(client, "x" * 500)
+    req = AccessRequest.query.one()
+    assert req.status == "pending" and len(req.message) == 300              # message is trimmed
+    assert b"Request pending" in client.get("/request-instructor").data
+    _request_access(client)                                                 # no duplicate pending request
+    assert AccessRequest.query.count() == 1
+    assert client.get("/upload").status_code == 403                         # still a viewer
+    client.post("/logout")
+
+    login(client, "ins1")
+    team = client.get("/invite").data
+    assert b"view1" in team and b"Approve" in team and b'class="count"' in client.get("/").data
+    assert _post(client, f"/api/requests/{req.id}/approve").status_code == 200
+    assert _post(client, f"/api/requests/{req.id}/approve").status_code == 400   # already handled
+    client.post("/logout")
+
+    assert User.query.filter_by(username="view1").one().role == "instructor"
+    login(client, "view1")
+    assert client.get("/upload").status_code == 200                         # now an instructor
+    assert Event.query.filter_by(event_type="instructor_requested").count() == 1
+    assert Event.query.filter_by(event_type="instructor_approved").count() == 1
+
+
+def test_rejected_request_keeps_viewer_and_can_be_retried(client):
+    from app.models import AccessRequest
+    login(client, "view1")
+    _request_access(client)
+    rid = AccessRequest.query.one().id
+    client.post("/logout")
+    login(client, "ins1")
+    assert _post(client, f"/api/requests/{rid}/reject").status_code == 200
+    client.post("/logout")
+    login(client, "view1")
+    assert User.query.filter_by(username="view1").one().role == "viewer"
+    page = client.get("/request-instructor").data
+    assert b"not approved" in page and b"Send request" in page
+    _request_access(client, "second try")
+    assert AccessRequest.query.filter_by(status="pending").count() == 1
+    assert Event.query.filter_by(event_type="instructor_rejected").count() == 1
+
+
+def test_viewers_cannot_decide_requests(client):
+    from app.models import AccessRequest
+    login(client, "view1")
+    _request_access(client)
+    rid = AccessRequest.query.one().id
+    assert _post(client, f"/api/requests/{rid}/approve").status_code == 403    # cannot approve own request
+    assert client.get("/invite").status_code == 403
+    assert db.session.get(User, User.query.filter_by(username="view1").one().id).role == "viewer"
+    client.post("/logout")
+    login(client, "ins1")
+    assert _post(client, f"/api/requests/{rid}/promote").status_code == 404    # unknown action
+    assert _post(client, "/api/requests/9999/approve").status_code == 404

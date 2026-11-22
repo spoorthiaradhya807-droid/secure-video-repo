@@ -6,7 +6,7 @@
   {% include "_authhero.html" %}
   <section class="auth-side"><div class="auth-card card">
     <h1>Create your account</h1>
-    <p class="muted">New accounts get the <b>Viewer</b> role. Instructor access is granted by an administrator.</p>
+    <p class="muted">New accounts start as a <b>Viewer</b>. Teachers: sign up, then choose <b>Become an instructor</b> and an existing instructor will approve you.</p>
     <form method="post">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="field"><label for="username">Username</label>

@@ -43,6 +43,18 @@ class Video(db.Model):
     uploader = db.relationship("User")
 
 
+class AccessRequest(db.Model):
+    """A viewer asking to become an instructor; an existing instructor approves or rejects."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    message = db.Column(db.String(300), default="")
+    status = db.Column(db.String(20), default="pending", index=True)  # pending | approved | rejected
+    created_at = db.Column(db.DateTime, default=utcnow)
+    decided_by = db.Column(db.Integer, nullable=True)
+    decided_at = db.Column(db.DateTime, nullable=True)
+    user = db.relationship("User")
+
+
 class Event(db.Model):
     """Audit log: login_ok, login_fail, view, url_renew, upload, upload_rejected, denied,
     register, password_reset_requested, password_reset."""

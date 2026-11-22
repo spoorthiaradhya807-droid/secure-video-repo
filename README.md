@@ -6,7 +6,7 @@ credentials and pre-signed URLs. Assignment 8 – Object storage security.
 ## Features
 | Area | What it does |
 |---|---|
-| Accounts | Sign up (always **Viewer**), log in, **forgot / reset password** by e-mail (Amazon SES), strength meter, rate limiting. Instructors are added by an existing instructor through **Invite** (single-use, 48-hour link), or by the admin with the CLI. |
+| Accounts | Sign up (always **Viewer**), log in, **forgot / reset password** by e-mail (Amazon SES), strength meter, rate limiting. New instructors come in two ways: a teacher signs up and sends a **Become an instructor** request that an existing instructor approves on the **Team** page, or an instructor invites a colleague by e-mail (single-use, 48-hour link). The admin can also use the CLI. |
 | Upload | Instructors only. **Any size up to a limit you set (default 10 GB; S3 itself allows 5 TB).** The browser sends the file straight to S3 in 8 MB chunks (3 in parallel, automatic retries, progress/speed/ETA, cancel). The server then verifies size, encryption and real MP4/WebM header bytes. |
 | Delete | An instructor can delete the videos they uploaded (**My videos** page, or the button on the video page). Removes the file from S3 and the library; the action is audit-logged. Bucket versioning keeps a hidden old copy for 30 days. |
 | Stream | Any logged-in user. Videos play from S3 via a **5-minute pre-signed GET URL**; the player auto-renews it if the user is still authorised. |
@@ -26,9 +26,14 @@ credentials and pre-signed URLs. Assignment 8 – Object storage security.
 Diagram: [docs/architecture.md](docs/architecture.md)
 
 ### How a new teacher gets an account
-1. An instructor opens **Invite** in the menu and enters the colleague's e-mail.
-2. The colleague receives a one-time link (by e-mail with SES, or copy-paste the link shown on the page / printed in the server terminal in dev mode).
-3. They choose a username and password on that page and become an **Instructor**, who can immediately upload, manage and delete their own videos.
+**Option 1: the teacher asks (self-service).**
+1. The teacher signs up on the website (they start as a Viewer) and clicks **Become an instructor**, optionally adding a short note.
+2. Every instructor sees a red counter on **Team**. They open it, read the request (username, e-mail, note) and press **Approve** or **Reject**.
+3. After approval the teacher refreshes and gets Upload, My videos and the other instructor pages.
+
+**Option 2: an instructor invites a colleague.** On **Team**, enter the colleague's e-mail. They receive a one-time link (e-mail with SES, or copy-paste it in dev mode), choose a username and password and become an Instructor directly.
+
+Both routes are audit-logged (`instructor_requested`, `instructor_approved`, `instructor_rejected`, `instructor_invited`, `instructor_joined`). Approval can only be done by an existing instructor, and nobody can approve their own request.
 
 ## Quick start (local, VS Code)
 ```bash
@@ -38,7 +43,7 @@ cp .env.example .env                                    # fill in values (see se
 python -m flask --app wsgi create-user teacher1 --role instructor --email you@example.com
 python -m flask --app wsgi create-user student1 --role viewer --email you2@example.com
 python wsgi.py                                          # http://localhost:5000
-python -m pytest                                        # 30 app-level tests (S3 mocked)
+python -m pytest                                        # 44 app-level tests (S3 mocked)
 ```
 Existing users without an e-mail (created before password reset existed): 
 `python -m flask --app wsgi set-email teacher1 you@example.com`.
