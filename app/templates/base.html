@@ -1,0 +1,56 @@
+{% import "_icons.html" as i %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="color-scheme" content="dark">
+  <title>{% block title %}SecureStream{% endblock %} · SecureStream</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="toasts" id="toasts" role="status" aria-live="polite">
+  {% for cat, m in get_flashed_messages(with_categories=true) %}
+  <div class="toast {{ cat }}">{{ i.icon('check' if cat == 'success' else 'alert', 20) }}<span>{{ m }}</span>
+    <button type="button" data-dismiss aria-label="Dismiss">{{ i.icon('x', 16) }}</button></div>
+  {% endfor %}
+</div>
+{% block nav %}
+{% set ep = request.endpoint %}
+<header class="nav"><div class="nav-in">
+  <a class="logo" href="{{ url_for('main.index') }}"><span class="logo-mark">{{ i.icon('play', 18) }}</span><span>Secure<b>Stream</b></span></a>
+  {% if current_user.is_authenticated %}
+  <nav class="menu">
+    <a class="{{ 'active' if ep in ('main.index', 'main.watch') }}" href="{{ url_for('main.index') }}">{{ i.icon('film', 18) }} Library</a>
+    {% if current_user.role == 'instructor' %}
+    <a class="{{ 'active' if ep == 'main.upload_page' }}" href="{{ url_for('main.upload_page') }}">{{ i.icon('upload', 18) }} Upload</a>
+    <a class="{{ 'active' if ep == 'main.manage' }}" href="{{ url_for('main.manage') }}">{{ i.icon('folder', 18) }} My videos</a>
+    <a class="{{ 'active' if ep == 'auth.invite' }}" href="{{ url_for('auth.invite') }}">{{ i.icon('mail', 18) }} Invite</a>
+    <a class="{{ 'active' if ep == 'main.analytics_page' }}" href="{{ url_for('main.analytics_page') }}">{{ i.icon('chart', 18) }} Analytics</a>
+    <a class="{{ 'active' if ep == 'main.audit' }}" href="{{ url_for('main.audit') }}">{{ i.icon('list', 18) }} Audit log</a>
+    {% endif %}
+  </nav>
+  <div class="spacer"></div>
+  <div class="userbox">
+    <div class="avatar">{{ current_user.username[0] }}</div>
+    <div class="who"><b>{{ current_user.username }}</b><span class="pill {{ current_user.role }}">{{ current_user.role }}</span></div>
+    <form class="inline" method="post" action="{{ url_for('auth.logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="linkbtn" title="Log out" aria-label="Log out">{{ i.icon('logout', 18) }}</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="spacer"></div>
+  <a class="btn ghost sm" href="{{ url_for('auth.login') }}">Log in</a>
+  <a class="btn sm" href="{{ url_for('auth.register') }}">Sign up</a>
+  {% endif %}
+</div></header>
+{% endblock %}
+{% block body %}<main>{% block content %}{% endblock %}</main>{% endblock %}
+{% block footer %}<footer>SecureStream · private S3 storage · role-based access · expiring pre-signed links</footer>{% endblock %}
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

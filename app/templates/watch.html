@@ -1,0 +1,55 @@
+{% extends "base.html" %}{% import "_icons.html" as i %}
+{% block title %}{{ video.title }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('main.index') }}">&larr; Back to library</a></p>
+<div class="watch">
+  <div>
+    <div class="player">
+      <video id="player" controls preload="metadata" src="{{ url }}" data-video-id="{{ video.id }}" data-ttl="{{ ttl }}"></video>
+    </div>
+    <h1 class="video-title">{{ video.title }}</h1>
+    <div class="meta">
+      <span>{{ i.icon('user', 14) }} {{ video.uploader.username }}</span>
+      {% if video.duration %}<span>{{ i.icon('clock', 14) }} {{ video.duration|duration }}</span>{% endif %}
+      <span>{{ i.icon('drive', 14) }} {{ video.size|filesize }}</span>
+      <span>{{ i.icon('calendar', 14) }} {{ video.created_at.strftime('%d %b %Y') }}</span>
+    </div>
+    {% if current_user.role == 'instructor' and video.uploader_id == current_user.id %}
+    <p><button class="btn danger sm" type="button" id="delete-video" data-url="{{ url_for('main.delete_video', vid=video.id) }}" data-title="{{ video.title }}">{{ i.icon('trash', 16) }} Delete this video</button></p>
+    {% endif %}
+    {% if video.description %}<div class="card"><p class="muted">{{ video.description }}</p></div>{% endif %}
+  </div>
+
+  <aside>
+    <div class="card sec">
+      <h3>{{ i.icon('shield', 20) }} How this stream is secured</h3>
+      <dl>
+        <dt>Your role</dt><dd><span class="pill {{ current_user.role }}">{{ current_user.role }}</span></dd>
+        <dt>Storage</dt><dd>Private S3 bucket</dd>
+        <dt>Public access</dt><dd>Blocked</dd>
+        <dt>Encryption</dt><dd>SSE-S3 (AES-256)</dd>
+        <dt>Transport</dt><dd>HTTPS only</dd>
+      </dl>
+      <div class="ttl"><i id="ttlbar"></i></div>
+      <div class="row"><span class="small muted" id="countdown">Signed link expires in {{ ttl }}s</span><span class="small muted" id="status"></span></div>
+      <div class="row">
+        <button class="btn ghost sm" type="button" id="show-url">{{ i.icon('eye', 16) }} Show signed URL</button>
+        <button class="btn ghost sm" type="button" id="copy-url" hidden>{{ i.icon('copy', 16) }} Copy</button>
+      </div>
+      <code class="url" id="signed-url" hidden></code>
+    </div>
+    {% if others %}
+    <div class="card side-list">
+      <h3>{{ i.icon('film', 20) }} More videos</h3>
+      {% for o in others %}
+      <a href="{{ url_for('main.watch', vid=o.id) }}">
+        <span class="mini g{{ o.id % 8 }}">{{ i.icon('play', 18) }}</span>
+        <span><b>{{ o.title }}</b><span class="small muted">{{ o.uploader.username }}{% if o.duration %} · {{ o.duration|duration }}{% endif %}</span></span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='watch.js') }}"></script>{% endblock %}

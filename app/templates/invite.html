@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% import "_icons.html" as i %}
+{% block title %}Invite an instructor{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Invite an instructor</h1>
+  <p>Give a colleague permission to upload videos. They create their own account from a one-time link.</p></div></div>
+<div class="upload">
+  <div class="card">
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field"><label for="email">Colleague's e-mail</label>
+        <div class="input">{{ i.icon('mail', 18) }}<input id="email" name="email" type="email" required maxlength="120" autofocus></div></div>
+      <button class="btn">{{ i.icon('mail', 18) }} Create invitation</button>
+    </form>
+    {% if link %}
+    <hr class="sep">
+    <h3>{{ i.icon('check', 20) }} Invitation created for {{ invited }}</h3>
+    <p class="muted small">{% if sent %}We e-mailed this link to them. {% else %}No e-mail was sent (dev mode or SES not set up), so send this link yourself. {% endif %}It works once and expires in 48 hours.</p>
+    <code class="url" id="invite-link">{{ link }}</code>
+    <p><button class="btn ghost sm" type="button" data-copy="invite-link">{{ i.icon('copy', 16) }} <span>Copy link</span></button></p>
+    {% endif %}
+  </div>
+  <aside class="card">
+    <h3>{{ i.icon('shield', 20) }} How invitations stay safe</h3>
+    <ol class="steps">
+      <li><span><b>Instructors only.</b> Only a logged-in instructor can create an invitation. Public sign-up always creates a Viewer.</span></li>
+      <li><span><b>Signed and expiring.</b> The link is cryptographically signed, tied to one e-mail address and valid for 48 hours.</span></li>
+      <li><span><b>Single use.</b> Once the account exists, the link stops working. Every invitation is recorded in the audit log.</span></li>
+    </ol>
+  </aside>
+</div>
+{% endblock %}

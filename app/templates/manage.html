@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% import "_icons.html" as i %}
+{% block title %}My videos{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>My videos</h1>
+  <p>Videos you uploaded. Deleting removes them from storage and from students' library.</p></div>
+  <div class="actions"><a class="btn" href="{{ url_for('main.upload_page') }}">{{ i.icon('upload', 18) }} Upload video</a></div></div>
+{% if videos %}
+<div class="tablewrap"><table>
+  <thead><tr><th>Video</th><th>Uploaded</th><th>Size</th><th>Length</th><th>Views</th><th></th></tr></thead>
+  <tbody>
+  {% for v in videos %}
+  <tr>
+    <td><div class="row"><span class="mini g{{ v.id % 8 }}">{{ i.icon('play', 18) }}</span><b>{{ v.title }}</b></div></td>
+    <td>{{ v.created_at.strftime('%d %b %Y') }}</td>
+    <td>{{ v.size|filesize }}</td>
+    <td>{{ v.duration|duration or '–' }}</td>
+    <td>{{ views.get(v.id, 0) }}</td>
+    <td><div class="row">
+      <a class="btn ghost sm" href="{{ url_for('main.watch', vid=v.id) }}">{{ i.icon('play', 16) }} Watch</a>
+      <button class="btn danger sm" type="button" data-delete data-url="{{ url_for('main.delete_video', vid=v.id) }}" data-title="{{ v.title }}">{{ i.icon('trash', 16) }} Delete</button>
+    </div></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+<p class="hint" id="manage-msg" role="status"></p>
+{% else %}
+<div class="empty">{{ i.icon('folder', 44) }}<h2>You have no published videos</h2>
+  <p>Videos you upload will appear here, where you can also delete them.</p>
+  <a class="btn" href="{{ url_for('main.upload_page') }}">{{ i.icon('upload', 18) }} Upload video</a></div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='manage.js') }}"></script>{% endblock %}

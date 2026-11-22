@@ -1,0 +1,36 @@
+{% extends "base.html" %}{% import "_icons.html" as i %}
+{% block title %}Library{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Course library</h1>
+    <p>{{ videos|length }} video{{ '' if videos|length == 1 else 's' }} · streamed securely from private storage</p></div>
+  <div class="actions">
+    {% if videos %}<div class="search input">{{ i.icon('search', 18) }}<input type="search" placeholder="Search videos…" data-filter-q aria-label="Search videos"></div>{% endif %}
+    {% if current_user.role == 'instructor' %}<a class="btn" href="{{ url_for('main.upload_page') }}">{{ i.icon('upload', 18) }} Upload video</a>{% endif %}
+  </div>
+</div>
+{% if videos %}
+<div class="grid" data-filterable>
+  {% for v in videos %}
+  <a class="vcard" href="{{ url_for('main.watch', vid=v.id) }}" data-search="{{ (v.title ~ ' ' ~ (v.description or '') ~ ' ' ~ v.uploader.username)|lower }}">
+    <div class="thumb g{{ v.id % 8 }}"><span class="play">{{ i.icon('play', 26) }}</span>
+      {% if v.duration %}<span class="dur">{{ v.duration|duration }}</span>{% endif %}</div>
+    <div class="vbody">
+      <h3>{{ v.title }}</h3>
+      <p>{{ v.description or 'No description' }}</p>
+      <div class="meta">
+        <span>{{ i.icon('user', 14) }} {{ v.uploader.username }}</span>
+        <span>{{ i.icon('drive', 14) }} {{ v.size|filesize }}</span>
+        <span>{{ i.icon('calendar', 14) }} {{ v.created_at.strftime('%d %b %Y') }}</span>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+  <div class="empty span-all" id="noresults" hidden>No videos match your search.</div>
+</div>
+{% else %}
+<div class="empty">{{ i.icon('film', 44) }}<h2>No videos yet</h2>
+  <p>{% if current_user.role == 'instructor' %}Upload your first lecture to get started.{% else %}Your instructors have not published anything yet. Check back soon.{% endif %}</p>
+  {% if current_user.role == 'instructor' %}<a class="btn" href="{{ url_for('main.upload_page') }}">{{ i.icon('upload', 18) }} Upload video</a>{% endif %}</div>
+{% endif %}
+{% endblock %}

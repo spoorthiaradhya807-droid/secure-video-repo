@@ -1,0 +1,9 @@
+{
+  "CORSRules": [{
+    "AllowedOrigins": ["https://YOUR-EC2-DOMAIN-OR-IP", "http://localhost:5000"],
+    "AllowedMethods": ["GET", "HEAD", "POST", "PUT"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3000
+  }]
+}

@@ -1,0 +1,153 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Secure Video Repository - private S3 bucket, bucket policy, Instructor/Viewer IAM roles, EC2 app role
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: Globally unique bucket name, e.g. securevideo-<yourname>-2026
+  AllowedOrigins:
+    Type: CommaDelimitedList
+    Default: "http://localhost:5000"
+    Description: Origins allowed to upload from the browser (add your EC2 https URL)
+
+Resources:
+  VideoBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref BucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules: [{ObjectOwnership: BucketOwnerEnforced}]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}
+      VersioningConfiguration: {Status: Enabled}
+      LifecycleConfiguration:
+        Rules:
+          - Id: cleanup
+            Status: Enabled
+            AbortIncompleteMultipartUpload: {DaysAfterInitiation: 1}
+            NoncurrentVersionExpiration: {NoncurrentDays: 30}
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins: !Ref AllowedOrigins
+            AllowedMethods: [GET, HEAD, POST, PUT]
+            AllowedHeaders: ["*"]
+            ExposedHeaders: [ETag]
+            MaxAge: 3000
+
+  InstructorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: VideoRepo-InstructorRole
+      Description: Can upload, read and clean up videos under videos/
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InstructorS3Access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [s3:PutObject, s3:GetObject, s3:DeleteObject, s3:AbortMultipartUpload]
+                Resource: !Sub "${VideoBucket.Arn}/videos/*"
+
+  ViewerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: VideoRepo-ViewerRole
+      Description: Read-only streaming of videos under videos/
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ViewerS3ReadOnly
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub "${VideoBucket.Arn}/videos/*"
+
+  AppInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: VideoRepo-AppInstanceRole
+      Description: EC2 role - may ONLY assume the Instructor/Viewer roles (no direct S3 access)
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ec2.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: AssumeAppRoles
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource: [!GetAtt InstructorRole.Arn, !GetAtt ViewerRole.Arn]
+        - PolicyName: SendPasswordResetEmail
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ses:SendEmail
+                Resource: "*"
+
+  AppInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: VideoRepo-AppInstanceProfile
+      Roles: [!Ref AppInstanceRole]
+
+  VideoBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref VideoBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: [!GetAtt VideoBucket.Arn, !Sub "${VideoBucket.Arn}/*"]
+            Condition: {Bool: {"aws:SecureTransport": "false"}}
+          - Sid: DenyWrongEncryptionHeader
+            Effect: Deny
+            Principal: "*"
+            Action: s3:PutObject
+            Resource: !Sub "${VideoBucket.Arn}/*"
+            Condition:
+              "Null": {"s3:x-amz-server-side-encryption": "false"}
+              StringNotEquals: {"s3:x-amz-server-side-encryption": AES256}
+          - Sid: DenyUploadsExceptInstructorRole
+            Effect: Deny
+            Principal: "*"
+            Action: s3:PutObject
+            Resource: !Sub "${VideoBucket.Arn}/*"
+            Condition: {ArnNotEquals: {"aws:PrincipalArn": !GetAtt InstructorRole.Arn}}
+
+Outputs:
+  BucketName: {Value: !Ref VideoBucket}
+  InstructorRoleArn: {Value: !GetAtt InstructorRole.Arn}
+  ViewerRoleArn: {Value: !GetAtt ViewerRole.Arn}
+  InstanceProfileName: {Value: !Ref AppInstanceProfile}

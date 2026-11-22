@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% import "_icons.html" as i %}
+{% block title %}Error {{ code }}{% endblock %}
+{% block content %}
+<div class="errorbox card"><div class="code">{{ code }}</div>
+  <h2>{{ msg }}</h2>
+  <p class="muted">If you think this is a mistake, ask your instructor or administrator.</p>
+  <a class="btn" href="{{ url_for('main.index') }}">{{ i.icon('arrow', 18) }} Back to the library</a></div>
+{% endblock %}

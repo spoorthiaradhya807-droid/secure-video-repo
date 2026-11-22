@@ -1,0 +1,49 @@
+{% extends "base.html" %}{% import "_icons.html" as i %}
+{% block title %}Upload{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Upload a video</h1>
+  <p>Large files are fine: they are sent to storage in small chunks, with automatic retries.</p></div></div>
+<div class="upload">
+  <div class="card">
+    <form id="upload-form" data-max-bytes="{{ max_bytes }}" novalidate>
+      <label class="drop" id="drop" for="file">
+        {{ i.icon('cloud', 44) }}
+        <b>Drag &amp; drop a video here, or click to browse</b>
+        <span class="muted small">.mp4 or .webm · up to {{ max_bytes|filesize }}</span>
+      </label>
+      <input class="visually-hidden" id="file" type="file" accept=".mp4,.webm,video/mp4,video/webm">
+
+      <div class="filecard" id="filecard" hidden>
+        {{ i.icon('film', 28) }}
+        <div><b id="fname"></b><span class="small muted" id="fmeta"></span></div>
+        <button class="linkbtn" type="button" id="clear" aria-label="Remove file">{{ i.icon('x', 18) }}</button>
+      </div>
+
+      <div class="field"><label for="title">Title</label>
+        <input class="plain" id="title" type="text" maxlength="120" placeholder="e.g. Week 3 - Object storage security" required></div>
+      <div class="field"><label for="description">Description <span class="faint">(optional)</span></label>
+        <input class="plain" id="description" type="text" maxlength="500" placeholder="What will students learn?"></div>
+
+      <div class="row">
+        <button class="btn" id="go" type="submit" disabled>{{ i.icon('upload', 18) }} Upload</button>
+        <button class="btn danger" id="cancel" type="button" hidden>Cancel upload</button>
+      </div>
+
+      <div class="prog" id="prog" hidden>
+        <div class="bar"><i id="bar-fill"></i></div>
+        <div class="stats"><span id="pct">0%</span><span id="partsinfo"></span><span id="speed"></span><span id="eta"></span></div>
+      </div>
+      <p class="hint" id="msg" role="status"></p>
+    </form>
+  </div>
+  <aside class="card">
+    <h3>{{ i.icon('shield', 20) }} What happens to your file</h3>
+    <ol class="steps">
+      <li><span><b>Upload plan.</b> The server checks that you are an instructor and the file type and size are allowed.</span></li>
+      <li><span><b>Direct chunked upload.</b> Your browser sends the video straight to S3 using short-lived signed links, 3 chunks at a time, retrying failed chunks.</span></li>
+      <li><span><b>Verification.</b> The server confirms the size, encryption and real file format before publishing it.</span></li>
+    </ol>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='upload.js') }}"></script>{% endblock %}

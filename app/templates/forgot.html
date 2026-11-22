@@ -1,0 +1,19 @@
+{% extends "base.html" %}{% import "_icons.html" as i %}
+{% block title %}Forgot password{% endblock %}
+{% block nav %}{% endblock %}{% block footer %}{% endblock %}
+{% block body %}
+<div class="auth">
+  {% include "_authhero.html" %}
+  <section class="auth-side"><div class="auth-card card">
+    <h1>Forgot your password?</h1>
+    <p class="muted">Enter the e-mail you registered with and we will send you a link to choose a new password.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field"><label for="email">E-mail</label>
+        <div class="input">{{ i.icon('mail', 18) }}<input id="email" name="email" type="email" required autofocus autocomplete="email"></div></div>
+      <button class="btn block">Send reset link</button>
+    </form>
+    <div class="auth-links"><a href="{{ url_for('auth.login') }}">&larr; Back to log in</a></div>
+  </div></section>
+</div>
+{% endblock %}

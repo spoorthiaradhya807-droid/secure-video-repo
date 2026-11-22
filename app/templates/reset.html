@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% import "_icons.html" as i %}
+{% block title %}Choose a new password{% endblock %}
+{% block nav %}{% endblock %}{% block footer %}{% endblock %}
+{% block body %}
+<div class="auth">
+  {% include "_authhero.html" %}
+  <section class="auth-side"><div class="auth-card card">
+    <h1>Choose a new password</h1>
+    <p class="muted">This link works once and expires 30 minutes after it was sent.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field"><label for="password">New password</label>
+        <div class="input">{{ i.icon('lock', 18) }}<input id="password" name="password" type="password" required minlength="10" autofocus autocomplete="new-password" data-strength>
+          <button class="toggle" type="button" data-toggle-pw aria-label="Show password">{{ i.icon('eye', 18) }}</button></div>
+        <div class="meter"><i id="meter"></i></div><div class="hint" id="meter-text">At least 10 characters, mixing letters and numbers.</div></div>
+      <div class="field"><label for="confirm">Confirm password</label>
+        <div class="input">{{ i.icon('key', 18) }}<input id="confirm" name="confirm" type="password" required minlength="10" autocomplete="new-password"></div></div>
+      <button class="btn block">Update password</button>
+    </form>
+  </div></section>
+</div>
+{% endblock %}

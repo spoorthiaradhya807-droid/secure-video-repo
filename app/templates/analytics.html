@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% import "_icons.html" as i %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Analytics</h1><p>Usage and security activity across the platform.</p></div></div>
+<div class="kpis">
+  <div class="card kpi"><span class="ico">{{ i.icon('users', 22) }}</span><div><b id="t-users">–</b><span>Users</span></div></div>
+  <div class="card kpi"><span class="ico">{{ i.icon('film', 22) }}</span><div><b id="t-videos">–</b><span>Videos</span></div></div>
+  <div class="card kpi"><span class="ico">{{ i.icon('eye', 22) }}</span><div><b id="t-views">–</b><span>Views</span></div></div>
+  <div class="card kpi"><span class="ico bad">{{ i.icon('ban', 22) }}</span><div><b id="t-denied">–</b><span>Denied requests</span></div></div>
+  <div class="card kpi"><span class="ico warn">{{ i.icon('key', 22) }}</span><div><b id="t-fails">–</b><span>Failed logins</span></div></div>
+</div>
+<div class="charts">
+  <div class="card"><h3>Views per video</h3><canvas id="c-videos"></canvas></div>
+  <div class="card"><h3>Activity, last 14 days</h3><canvas id="c-daily"></canvas></div>
+  <div class="card"><h3>Uploads per instructor</h3><canvas id="c-uploads"></canvas></div>
+  <div class="card"><h3>Top viewers</h3><canvas id="c-viewers"></canvas></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='analytics.js') }}"></script>
+{% endblock %}

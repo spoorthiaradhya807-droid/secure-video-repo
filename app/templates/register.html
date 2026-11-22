@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% import "_icons.html" as i %}
+{% block title %}Create account{% endblock %}
+{% block nav %}{% endblock %}{% block footer %}{% endblock %}
+{% block body %}
+<div class="auth">
+  {% include "_authhero.html" %}
+  <section class="auth-side"><div class="auth-card card">
+    <h1>Create your account</h1>
+    <p class="muted">New accounts get the <b>Viewer</b> role. Instructor access is granted by an administrator.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field"><label for="username">Username</label>
+        <div class="input">{{ i.icon('user', 18) }}<input id="username" name="username" type="text" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+" autocomplete="username"></div>
+        <div class="hint">3-30 letters, digits or underscore.</div></div>
+      <div class="field"><label for="email">E-mail</label>
+        <div class="input">{{ i.icon('mail', 18) }}<input id="email" name="email" type="email" required maxlength="120" autocomplete="email"></div>
+        <div class="hint">Only used to reset your password.</div></div>
+      <div class="field"><label for="password">Password</label>
+        <div class="input">{{ i.icon('lock', 18) }}<input id="password" name="password" type="password" required minlength="10" autocomplete="new-password" data-strength>
+          <button class="toggle" type="button" data-toggle-pw aria-label="Show password">{{ i.icon('eye', 18) }}</button></div>
+        <div class="meter"><i id="meter"></i></div><div class="hint" id="meter-text">At least 10 characters, mixing letters and numbers.</div></div>
+      <button class="btn block">Create account</button>
+    </form>
+    <div class="auth-links"><span class="muted">Already registered?</span><a href="{{ url_for('auth.login') }}">Log in</a></div>
+  </div></section>
+</div>
+{% endblock %}

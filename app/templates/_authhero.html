@@ -1,0 +1,13 @@
+{% import "_icons.html" as i %}
+<aside class="auth-hero">
+  <a class="logo" href="{{ url_for('auth.login') }}"><span class="logo-mark">{{ i.icon('play', 18) }}</span><span>Secure<b>Stream</b></span></a>
+  <div>
+    <h2>Learn securely.<br>Stream anywhere.</h2>
+    <p>A private video library for your courses, protected end-to-end with cloud-grade access control.</p>
+  </div>
+  <ul class="feat">
+    <li><span class="ico">{{ i.icon('lock', 20) }}</span><div><b>Private by default</b>Videos live in a locked-down bucket with no public access.</div></li>
+    <li><span class="ico">{{ i.icon('users', 20) }}</span><div><b>Role-based access</b>Instructors publish, viewers watch. Enforced by IAM, not just the UI.</div></li>
+    <li><span class="ico">{{ i.icon('clock', 20) }}</span><div><b>Expiring links</b>Every stream uses a short-lived signed URL that dies in minutes.</div></li>
+  </ul>
+</aside>

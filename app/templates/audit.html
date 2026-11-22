@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% import "_icons.html" as i %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Audit log</h1><p>The last 200 security-relevant events (times in UTC).</p></div></div>
+<div class="toolbar">
+  <div class="search input">{{ i.icon('search', 18) }}<input type="search" placeholder="Filter by user, video, IP or detail…" data-filter-q aria-label="Filter events"></div>
+  <select data-filter-type aria-label="Event type"><option value="">All event types</option>
+    {% for t in types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}</select>
+</div>
+<div class="tablewrap"><table>
+  <thead><tr><th>Time</th><th>User</th><th>Event</th><th>Video</th><th>IP</th><th>Detail</th></tr></thead>
+  <tbody data-filterable>
+  {% for e in events %}
+  <tr data-type="{{ e.event_type }}" data-search="{{ (e.username ~ ' ' ~ e.event_type ~ ' ' ~ (e.video_id or '') ~ ' ' ~ (e.ip or '') ~ ' ' ~ (e.detail or ''))|lower }}">
+    <td>{{ e.ts.strftime('%Y-%m-%d %H:%M:%S') }}</td><td>{{ e.username }}</td>
+    <td><span class="badge {{ e.event_type }}">{{ e.event_type }}</span></td>
+    <td>{{ e.video_id or '' }}</td><td>{{ e.ip }}</td><td class="wrap">{{ e.detail }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+<p class="empty span-all" id="noresults" hidden>No events match.</p>
+{% endblock %}

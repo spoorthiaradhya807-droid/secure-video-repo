@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% import "_icons.html" as i %}
+{% block title %}Create your instructor account{% endblock %}
+{% block nav %}{% endblock %}{% block footer %}{% endblock %}
+{% block body %}
+<div class="auth">
+  {% include "_authhero.html" %}
+  <section class="auth-side"><div class="auth-card card">
+    <h1>Create your instructor account</h1>
+    <p class="muted">You were invited to publish videos on SecureStream. This link works once and expires 48 hours after it was created.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field"><label for="email">E-mail</label>
+        <div class="input">{{ i.icon('mail', 18) }}<input id="email" type="email" value="{{ email }}" disabled></div></div>
+      <div class="field"><label for="username">Choose a username</label>
+        <div class="input">{{ i.icon('user', 18) }}<input id="username" name="username" type="text" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+" autofocus autocomplete="username"></div>
+        <div class="hint">3-30 letters, digits or underscore.</div></div>
+      <div class="field"><label for="password">Password</label>
+        <div class="input">{{ i.icon('lock', 18) }}<input id="password" name="password" type="password" required minlength="10" autocomplete="new-password" data-strength>
+          <button class="toggle" type="button" data-toggle-pw aria-label="Show password">{{ i.icon('eye', 18) }}</button></div>
+        <div class="meter"><i id="meter"></i></div><div class="hint" id="meter-text">At least 10 characters, mixing letters and numbers.</div></div>
+      <div class="field"><label for="confirm">Confirm password</label>
+        <div class="input">{{ i.icon('key', 18) }}<input id="confirm" name="confirm" type="password" required minlength="10" autocomplete="new-password"></div></div>
+      <button class="btn block">Create account</button>
+    </form>
+  </div></section>
+</div>
+{% endblock %}
